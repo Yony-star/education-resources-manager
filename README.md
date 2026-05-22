@@ -22,7 +22,7 @@ Plugin de WordPress para gestionar recursos educativos: Custom Post Type, taxono
 1. Sube la carpeta `education-resources-manager` a `wp-content/plugins/`.
 2. En **Plugins**, activa **Education Resources Manager**.
 
-Tras la activación, el plugin registra sus hooks y opciones de versión. Los agentes posteriores del proyecto completan CPT, base de datos, REST API, shortcode y panel admin.
+Tras la activación, el plugin registra sus hooks, crea la tabla de tracking y expone CPT, REST API, shortcode y panel de administración.
 
 ## Uso del shortcode
 
@@ -60,7 +60,7 @@ Namespace: `erm/v1` — URL base: `/wp-json/erm/v1`
 | POST   | `/resources/{id}/track`      | Registra vista, descarga, etc. |
 | GET    | `/stats`                     | Estadísticas agregadas         |
 
-Consulta `docs/API.md` (Agent 07) para parámetros, respuestas y ejemplos completos.
+Consulta `docs/API.md` para parámetros, respuestas y ejemplos completos. Ver también `docs/ARCHITECTURE.md` y `docs/DATABASE.md`.
 
 ## Desinstalación
 
@@ -73,5 +73,6 @@ El archivo `uninstall.php` elimina las opciones `erm_version` y `erm_db_version`
 
 ### 1.0.0
 
-- Scaffolding inicial: estructura de carpetas, loader de hooks, activación/desactivación y desinstalación limpia.
-- Stubs de clases para CPT, taxonomías, base de datos, admin, shortcode y REST API (completados por agentes 02–06).
+- CPT `education_resource`, taxonomías, meta boxes y tabla `erm_tracking`.
+- REST API `erm/v1`, shortcode `[recursos_educativos]` con filtros AJAX y panel admin con estadísticas.
+- Documentación en `docs/` y scripts SQL en `database/`.
