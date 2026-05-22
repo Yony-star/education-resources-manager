@@ -4,7 +4,8 @@
  *
  * @package Education_Resources_Manager
  *
- * @var array<string, mixed> $atts Shortcode attributes.
+ * @var array<string, mixed>        $atts       Shortcode attributes.
+ * @var WP_Term[]|array<int, mixed> $categories resource_category terms for the filter select.
  */
 
 if ( ! defined( 'WPINC' ) ) {
@@ -24,11 +25,15 @@ if ( ! defined( 'WPINC' ) ) {
 	<?php if ( 'yes' === $atts['show_filters'] ) : ?>
 		<div class="erm-filters" role="search" aria-label="<?php esc_attr_e( 'Filtros de recursos', 'education-resources-manager' ); ?>">
 
-			<div class="erm-filter-group">
+			<div class="erm-filter-group erm-filter-group--search">
 				<label for="erm-search"><?php esc_html_e( 'Buscar', 'education-resources-manager' ); ?></label>
-				<input type="text" id="erm-search" class="erm-filter-input"
+				<input type="search" id="erm-search" class="erm-filter-input"
 					placeholder="<?php esc_attr_e( 'Buscar recursos...', 'education-resources-manager' ); ?>"
+					minlength="2" maxlength="100"
+					autocomplete="off"
+					aria-describedby="erm-search-error"
 					aria-label="<?php esc_attr_e( 'Buscar recursos por texto', 'education-resources-manager' ); ?>">
+				<p id="erm-search-error" class="erm-filter-error" role="alert" hidden></p>
 			</div>
 
 			<div class="erm-filter-group">
@@ -49,6 +54,18 @@ if ( ! defined( 'WPINC' ) ) {
 					<option value="beginner" <?php selected( $atts['difficulty'], 'beginner' ); ?>><?php esc_html_e( 'Principiante', 'education-resources-manager' ); ?></option>
 					<option value="intermediate" <?php selected( $atts['difficulty'], 'intermediate' ); ?>><?php esc_html_e( 'Intermedio', 'education-resources-manager' ); ?></option>
 					<option value="advanced" <?php selected( $atts['difficulty'], 'advanced' ); ?>><?php esc_html_e( 'Avanzado', 'education-resources-manager' ); ?></option>
+				</select>
+			</div>
+
+			<div class="erm-filter-group">
+				<label for="erm-category"><?php esc_html_e( 'Categoría', 'education-resources-manager' ); ?></label>
+				<select id="erm-category" class="erm-filter-select" aria-label="<?php esc_attr_e( 'Filtrar por categoría', 'education-resources-manager' ); ?>">
+					<option value=""><?php esc_html_e( 'Todas las categorías', 'education-resources-manager' ); ?></option>
+					<?php foreach ( $categories as $term ) : ?>
+						<option value="<?php echo esc_attr( $term->slug ); ?>" <?php selected( $atts['category'], $term->slug ); ?>>
+							<?php echo esc_html( $term->name ); ?>
+						</option>
+					<?php endforeach; ?>
 				</select>
 			</div>
 

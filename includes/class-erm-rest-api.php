@@ -314,7 +314,7 @@ class ERM_REST_API {
 		$action_type = $request->get_param( 'action_type' );
 		$post        = get_post( $resource_id );
 
-		if ( ! $post || 'education_resource' !== $post->post_type ) {
+		if ( ! $post || 'education_resource' !== $post->post_type || 'publish' !== $post->post_status ) {
 			return new WP_Error(
 				'resource_not_found',
 				__( 'Recurso no encontrado.', 'education-resources-manager' ),
@@ -703,6 +703,11 @@ class ERM_REST_API {
 			'views'            => $db->get_resource_views( $post->ID ),
 			'permalink'        => get_permalink( $post ),
 			'date_created'     => get_the_date( 'c', $post ),
+			'publication_status' => $this->get_resource_publication_status( $post->ID ),
+		);
+
+		$resource['publication_status_label'] = ERM_Post_Type::get_publication_status_label(
+			$resource['publication_status']
 		);
 
 		if ( $full ) {
@@ -712,6 +717,22 @@ class ERM_REST_API {
 		}
 
 		return $resource;
+	}
+
+	/**
+	 * Resolve publication status meta for API responses.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return string draft|publish|erm_archived
+	 */
+	private function get_resource_publication_status( $post_id ) {
+		$status = get_post_meta( $post_id, '_erm_publication_status', true );
+
+		if ( $status ) {
+			return ERM_Post_Type::normalize_publication_status( $status );
+		}
+
+		return ERM_Post_Type::normalize_publication_status( get_post_status( $post_id ) );
 	}
 
 	/**

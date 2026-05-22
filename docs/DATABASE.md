@@ -88,6 +88,15 @@ Almacenar eventos de interacción (vista, descarga, completado) de forma append-
 | `_erm_resource_url` | `string` | URL válida | Enlace externo al contenido |
 | `_erm_instructor` | `string` | texto libre | Instructor o autor |
 | `_erm_price` | `float` | ≥ 0 (`0` = gratuito) | Precio del recurso |
+| `_erm_publication_status` | `string` | `draft`, `publish`, `erm_archived` | Espejo del estado de publicación (sincronizado con `post_status`) |
+
+### Estados de publicación (`post_status`)
+
+| Valor | Etiqueta | Comportamiento |
+|-------|---------|----------------|
+| `draft` | Borrador | No visible en shortcode ni REST público |
+| `publish` | Publicado | Visible en frontend y API pública |
+| `erm_archived` | Archivado | Estado custom registrado con `register_post_status()`; oculto del sitio público |
 
 ---
 

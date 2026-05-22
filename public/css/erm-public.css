@@ -73,6 +73,26 @@
 	box-shadow: 0 0 0 1px var(--erm-primary);
 }
 
+.erm-filter-group--search {
+	flex: 1 1 220px;
+}
+
+.erm-filter-input--invalid {
+	border-color: #d63638;
+}
+
+.erm-filter-input--invalid:focus {
+	border-color: #d63638;
+	box-shadow: 0 0 0 1px #d63638;
+}
+
+.erm-filter-error {
+	margin: 0;
+	font-size: 0.8125rem;
+	color: #d63638;
+	line-height: 1.4;
+}
+
 .erm-btn {
 	display: inline-flex;
 	align-items: center;

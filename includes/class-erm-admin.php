@@ -102,15 +102,22 @@ class ERM_Admin {
 		$filter_type       = isset( $_GET['erm_type'] ) ? sanitize_text_field( wp_unslash( $_GET['erm_type'] ) ) : '';
 		$filter_difficulty = isset( $_GET['erm_difficulty'] ) ? sanitize_text_field( wp_unslash( $_GET['erm_difficulty'] ) ) : '';
 		$filter_category   = isset( $_GET['erm_category'] ) ? sanitize_text_field( wp_unslash( $_GET['erm_category'] ) ) : '';
+		$filter_status     = isset( $_GET['erm_status'] ) ? sanitize_text_field( wp_unslash( $_GET['erm_status'] ) ) : '';
 		$search            = isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '';
 		$paged             = isset( $_GET['paged'] ) ? absint( wp_unslash( $_GET['paged'] ) ) : 1;
 
 		$filter_type       = $this->sanitize_type_filter( $filter_type );
 		$filter_difficulty = $this->sanitize_difficulty_filter( $filter_difficulty );
+		$filter_status     = $this->sanitize_publication_status_filter( $filter_status );
+
+		$post_statuses = ERM_Post_Type::get_allowed_publication_statuses();
+		if ( $filter_status ) {
+			$post_statuses = array( $filter_status );
+		}
 
 		$query_args = array(
 			'post_type'      => 'education_resource',
-			'post_status'    => array( 'publish', 'draft', 'pending', 'private' ),
+			'post_status'    => $post_statuses,
 			'posts_per_page' => 20,
 			'paged'          => max( 1, $paged ),
 			'orderby'        => 'date',
@@ -178,6 +185,20 @@ class ERM_Admin {
 		$monthly = $db->get_monthly_stats( 6 );
 
 		include ERM_PLUGIN_DIR . 'admin/views/admin-page-stats.php';
+	}
+
+	/**
+	 * Sanitize publication status filter for admin list.
+	 *
+	 * @param string $status Status slug.
+	 * @return string Empty string or allowed status.
+	 */
+	private function sanitize_publication_status_filter( $status ) {
+		if ( in_array( $status, ERM_Post_Type::get_allowed_publication_statuses(), true ) ) {
+			return $status;
+		}
+
+		return '';
 	}
 
 	/**

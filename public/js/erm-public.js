@@ -22,9 +22,14 @@
 	const pagination = document.getElementById('erm-pagination');
 	const loadingEl = document.getElementById('erm-loading');
 	const searchInput = document.getElementById('erm-search');
+	const searchError = document.getElementById('erm-search-error');
 	const typeSelect = document.getElementById('erm-type');
 	const diffSelect = document.getElementById('erm-difficulty');
+	const categorySelect = document.getElementById('erm-category');
 	const clearBtn = document.getElementById('erm-clear-filters');
+
+	const searchMin = (typeof ermPublic !== 'undefined' && ermPublic.searchMin) || 2;
+	const searchMax = (typeof ermPublic !== 'undefined' && ermPublic.searchMax) || 100;
 
 	const typeLabels = {
 		course: 'Curso',
@@ -292,6 +297,82 @@
 			.replace(/'/g, '&#039;');
 	}
 
+	/**
+	 * Validate search filter before hitting the REST API.
+	 *
+	 * @param {string} value Raw input value.
+	 * @return {{ valid: boolean, value: string, message?: string }}
+	 */
+	function validateSearch(value) {
+		const trimmed = String(value).trim();
+
+		if (!trimmed) {
+			return { valid: true, value: '' };
+		}
+
+		if (trimmed.length < searchMin) {
+			return {
+				valid: false,
+				value: trimmed,
+				message: ermPublic.i18n.search_min,
+			};
+		}
+
+		if (trimmed.length > searchMax) {
+			return {
+				valid: false,
+				value: trimmed.slice(0, searchMax),
+				message: ermPublic.i18n.search_max,
+			};
+		}
+
+		return { valid: true, value: trimmed };
+	}
+
+	function setSearchValidationState(result) {
+		if (!searchInput) {
+			return false;
+		}
+
+		if (result.valid) {
+			searchInput.classList.remove('erm-filter-input--invalid');
+			searchInput.setAttribute('aria-invalid', 'false');
+			if (searchError) {
+				searchError.textContent = '';
+				searchError.hidden = true;
+			}
+			return true;
+		}
+
+		searchInput.classList.add('erm-filter-input--invalid');
+		searchInput.setAttribute('aria-invalid', 'true');
+		if (searchError) {
+			searchError.textContent = result.message || '';
+			searchError.hidden = !result.message;
+		}
+		return false;
+	}
+
+	function applySearchFilter(rawValue, triggerFetch) {
+		const result = validateSearch(rawValue);
+
+		if (!result.valid) {
+			setSearchValidationState(result);
+			if (result.value.length > searchMax && searchInput) {
+				searchInput.value = result.value;
+			}
+			return;
+		}
+
+		setSearchValidationState(result);
+		state.filters.search = result.value;
+		state.currentPage = 1;
+
+		if (triggerFetch !== false) {
+			fetchResources();
+		}
+	}
+
 	function debounce(fn, delay) {
 		let timer;
 		return function () {
@@ -320,16 +401,21 @@
 		if (diffSelect && state.filters.difficulty) {
 			diffSelect.value = state.filters.difficulty;
 		}
+		if (categorySelect && state.filters.category) {
+			categorySelect.value = state.filters.category;
+		}
 
 		if (searchInput) {
 			searchInput.addEventListener(
 				'input',
 				debounce(function () {
-					state.filters.search = this.value.trim();
-					state.currentPage = 1;
-					fetchResources();
+					applySearchFilter(this.value, true);
 				}, 400)
 			);
+
+			searchInput.addEventListener('blur', function () {
+				applySearchFilter(this.value, false);
+			});
 		}
 
 		if (typeSelect) {
@@ -348,24 +434,41 @@
 			});
 		}
 
+		if (categorySelect) {
+			categorySelect.addEventListener('change', function () {
+				state.filters.category = this.value;
+				state.currentPage = 1;
+				fetchResources();
+			});
+		}
+
 		if (clearBtn) {
 			clearBtn.addEventListener('click', function () {
+				const defaultCategory = container.dataset.category || '';
+
 				state.filters = {
 					search: '',
 					type: '',
 					difficulty: '',
-					category: container.dataset.category || '',
+					category: defaultCategory,
 				};
 				state.currentPage = 1;
+
 				if (searchInput) {
 					searchInput.value = '';
 				}
+				setSearchValidationState({ valid: true, value: '' });
+
 				if (typeSelect) {
 					typeSelect.value = '';
 				}
 				if (diffSelect) {
 					diffSelect.value = '';
 				}
+				if (categorySelect) {
+					categorySelect.value = defaultCategory;
+				}
+
 				fetchResources();
 			});
 		}

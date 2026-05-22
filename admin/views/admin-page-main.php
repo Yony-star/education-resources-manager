@@ -10,6 +10,7 @@
  * @var string             $filter_type   Type filter.
  * @var string             $filter_difficulty Difficulty filter.
  * @var string             $filter_category Category slug filter.
+ * @var string             $filter_status   Publication status filter.
  * @var string             $search        Search string.
  * @var int                $paged         Current page.
  * @var ERM_Admin          $this          Admin instance.
@@ -45,6 +46,7 @@ $pagination_args = array(
 			'erm_type'       => $filter_type,
 			'erm_difficulty' => $filter_difficulty,
 			'erm_category'   => $filter_category,
+			'erm_status'     => $filter_status,
 			's'              => $search,
 		)
 	),
@@ -80,6 +82,15 @@ $pagination_args = array(
 			<?php foreach ( $difficulty_options as $val => $label ) : ?>
 				<option value="<?php echo esc_attr( $val ); ?>" <?php selected( $filter_difficulty, $val ); ?>>
 					<?php echo esc_html( $label ); ?>
+				</option>
+			<?php endforeach; ?>
+		</select>
+
+		<select name="erm_status" class="erm-admin-filters__select">
+			<option value=""><?php esc_html_e( 'Todos los estados', 'education-resources-manager' ); ?></option>
+			<?php foreach ( ERM_Post_Type::get_allowed_publication_statuses() as $status_slug ) : ?>
+				<option value="<?php echo esc_attr( $status_slug ); ?>" <?php selected( $filter_status, $status_slug ); ?>>
+					<?php echo esc_html( ERM_Post_Type::get_publication_status_label( $status_slug ) ); ?>
 				</option>
 			<?php endforeach; ?>
 		</select>
@@ -143,10 +154,13 @@ $pagination_args = array(
 								</a>
 							</strong>
 							<?php
-							$status_obj = get_post_status_object( get_post_status( $post_id ) );
-							if ( 'publish' !== get_post_status( $post_id ) && $status_obj ) :
+							$pub_status = get_post_meta( $post_id, '_erm_publication_status', true );
+							if ( ! $pub_status ) {
+								$pub_status = ERM_Post_Type::normalize_publication_status( get_post_status( $post_id ) );
+							}
+							if ( 'publish' !== $pub_status ) :
 								?>
-								<span class="erm-post-status"> — <?php echo esc_html( $status_obj->label ); ?></span>
+								<span class="erm-post-status"> — <?php echo esc_html( ERM_Post_Type::get_publication_status_label( $pub_status ) ); ?></span>
 							<?php endif; ?>
 						</td>
 						<td>

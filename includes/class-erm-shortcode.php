@@ -62,6 +62,26 @@ class ERM_Shortcode {
 			$atts['difficulty'] = '';
 		}
 
+		if ( $atts['category'] ) {
+			$term = get_term_by( 'slug', $atts['category'], 'resource_category' );
+			if ( ! $term || is_wp_error( $term ) ) {
+				$atts['category'] = '';
+			}
+		}
+
+		$categories = get_terms(
+			array(
+				'taxonomy'   => 'resource_category',
+				'hide_empty' => false,
+				'orderby'    => 'name',
+				'order'      => 'ASC',
+			)
+		);
+
+		if ( is_wp_error( $categories ) ) {
+			$categories = array();
+		}
+
 		$this->enqueue_assets( $atts );
 
 		ob_start();
@@ -101,12 +121,16 @@ class ERM_Shortcode {
 				'apiUrl'  => esc_url_raw( rest_url( 'erm/v1' ) ),
 				'nonce'   => wp_create_nonce( 'wp_rest' ),
 				'i18n'    => array(
-					'loading'    => __( 'Cargando recursos...', 'education-resources-manager' ),
-					'no_results' => __( 'No se encontraron recursos.', 'education-resources-manager' ),
-					'error'      => __( 'Error al cargar los recursos.', 'education-resources-manager' ),
-					'view'       => __( 'Ver recurso', 'education-resources-manager' ),
-					'free'       => __( 'Gratuito', 'education-resources-manager' ),
+					'loading'     => __( 'Cargando recursos...', 'education-resources-manager' ),
+					'no_results'  => __( 'No se encontraron recursos.', 'education-resources-manager' ),
+					'error'       => __( 'Error al cargar los recursos.', 'education-resources-manager' ),
+					'view'        => __( 'Ver recurso', 'education-resources-manager' ),
+					'free'        => __( 'Gratuito', 'education-resources-manager' ),
+					'search_min'  => __( 'Escribe al menos 2 caracteres para buscar.', 'education-resources-manager' ),
+					'search_max'  => __( 'La búsqueda no puede superar 100 caracteres.', 'education-resources-manager' ),
 				),
+				'searchMin' => 2,
+				'searchMax' => 100,
 				'perPage' => (int) $atts['per_page'],
 				'siteUrl' => get_site_url(),
 			)

@@ -51,6 +51,8 @@ function run_erm() {
 	$loader->add_action( 'init', $post_type, 'register' );
 	$loader->add_action( 'add_meta_boxes', $post_type, 'add_meta_boxes' );
 	$loader->add_action( 'save_post_education_resource', $post_type, 'save_meta' );
+	$loader->add_action( 'save_post_education_resource', $post_type, 'sync_publication_meta', 20 );
+	$loader->add_filter( 'display_post_states', $post_type, 'display_post_states', 10, 2 );
 	$loader->add_filter( 'manage_education_resource_posts_columns', $post_type, 'add_custom_columns' );
 	$loader->add_action( 'manage_education_resource_posts_custom_column', $post_type, 'render_custom_columns', 10, 2 );
 
