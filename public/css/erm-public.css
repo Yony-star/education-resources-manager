@@ -1,0 +1,348 @@
+/**
+ * Education Resources Manager — public shortcode styles.
+ */
+
+:root {
+	--erm-primary: #2271b1;
+	--erm-primary-hover: #135e96;
+	--erm-secondary: #f6f7f7;
+	--erm-border: #dcdcde;
+	--erm-text: #3c434a;
+	--erm-text-light: #646970;
+	--erm-radius: 8px;
+	--erm-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+	--erm-gap: 24px;
+	--erm-card-min: 280px;
+}
+
+.erm-container {
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 0 16px 32px;
+	color: var(--erm-text);
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+}
+
+.erm-title {
+	margin: 0 0 var(--erm-gap);
+	font-size: 1.75rem;
+	font-weight: 600;
+	color: var(--erm-text);
+}
+
+.erm-filters {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16px;
+	align-items: flex-end;
+	margin-bottom: var(--erm-gap);
+	padding: 20px;
+	background: var(--erm-secondary);
+	border: 1px solid var(--erm-border);
+	border-radius: var(--erm-radius);
+}
+
+.erm-filter-group {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	min-width: 160px;
+	flex: 1 1 160px;
+}
+
+.erm-filter-group label {
+	font-size: 0.875rem;
+	font-weight: 600;
+	color: var(--erm-text);
+}
+
+.erm-filter-input,
+.erm-filter-select {
+	padding: 8px 12px;
+	border: 1px solid var(--erm-border);
+	border-radius: var(--erm-radius);
+	font-size: 1rem;
+	color: var(--erm-text);
+	background: #fff;
+}
+
+.erm-filter-input:focus,
+.erm-filter-select:focus {
+	border-color: var(--erm-primary);
+	outline: 2px solid transparent;
+	box-shadow: 0 0 0 1px var(--erm-primary);
+}
+
+.erm-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 10px 18px;
+	border: none;
+	border-radius: var(--erm-radius);
+	font-size: 0.9375rem;
+	font-weight: 600;
+	cursor: pointer;
+	text-decoration: none;
+	transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
+}
+
+.erm-btn-primary {
+	background: var(--erm-primary);
+	color: #fff;
+}
+
+.erm-btn-primary:hover,
+.erm-btn-primary:focus {
+	background: var(--erm-primary-hover);
+	color: #fff;
+}
+
+.erm-btn-secondary {
+	background: #fff;
+	color: var(--erm-text);
+	border: 1px solid var(--erm-border);
+}
+
+.erm-btn-secondary:hover,
+.erm-btn-secondary:focus {
+	border-color: var(--erm-primary);
+	color: var(--erm-primary);
+}
+
+.erm-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(var(--erm-card-min), 1fr));
+	gap: var(--erm-gap);
+	transition: opacity 0.2s ease;
+}
+
+.erm-card {
+	display: flex;
+	flex-direction: column;
+	background: #fff;
+	border: 1px solid var(--erm-border);
+	border-radius: var(--erm-radius);
+	box-shadow: var(--erm-shadow);
+	overflow: hidden;
+	transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.erm-card:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+.erm-card__image {
+	position: relative;
+	aspect-ratio: 16 / 9;
+	background: var(--erm-secondary);
+	overflow: hidden;
+}
+
+.erm-card__image img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
+}
+
+.erm-card__image--placeholder {
+	background: linear-gradient(135deg, #e8ecf0 0%, #d5dce4 100%);
+}
+
+.erm-card__body {
+	padding: 16px;
+	flex: 1;
+}
+
+.erm-card__meta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-bottom: 10px;
+}
+
+.erm-badge {
+	display: inline-block;
+	padding: 4px 10px;
+	font-size: 0.75rem;
+	font-weight: 600;
+	border-radius: 999px;
+	line-height: 1.2;
+}
+
+.erm-badge--course {
+	background: #e7f3ff;
+	color: #135e96;
+}
+
+.erm-badge--tutorial {
+	background: #f0e6ff;
+	color: #5b21b6;
+}
+
+.erm-badge--ebook {
+	background: #fff4e5;
+	color: #9a6700;
+}
+
+.erm-badge--video {
+	background: #ffe8e8;
+	color: #9b1c1c;
+}
+
+.erm-badge--beginner {
+	background: #e8f5e9;
+	color: #2e7d32;
+}
+
+.erm-badge--intermediate {
+	background: #fff8e1;
+	color: #f57f17;
+}
+
+.erm-badge--advanced {
+	background: #fce4ec;
+	color: #c62828;
+}
+
+.erm-card__title {
+	margin: 0 0 8px;
+	font-size: 1.125rem;
+	font-weight: 600;
+	line-height: 1.3;
+}
+
+.erm-card__excerpt {
+	margin: 0 0 12px;
+	font-size: 0.875rem;
+	color: var(--erm-text-light);
+	line-height: 1.5;
+}
+
+.erm-card__info {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	align-items: center;
+	font-size: 0.875rem;
+	color: var(--erm-text-light);
+}
+
+.erm-card__duration::before {
+	content: "";
+}
+
+.erm-price {
+	font-weight: 600;
+	color: var(--erm-text);
+}
+
+.erm-price--free {
+	color: #2e7d32;
+}
+
+.erm-card__footer {
+	padding: 0 16px 16px;
+}
+
+.erm-card__footer .erm-btn {
+	width: 100%;
+}
+
+.erm-loading {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 12px;
+	padding: 24px;
+	color: var(--erm-text-light);
+}
+
+.erm-spinner {
+	width: 24px;
+	height: 24px;
+	border: 3px solid var(--erm-border);
+	border-top-color: var(--erm-primary);
+	border-radius: 50%;
+	animation: erm-spin 0.8s linear infinite;
+}
+
+@keyframes erm-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+.erm-pagination {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 8px;
+	margin-top: var(--erm-gap);
+}
+
+.erm-pagination__btn {
+	min-width: 40px;
+	height: 40px;
+	padding: 0 12px;
+	border: 1px solid var(--erm-border);
+	border-radius: var(--erm-radius);
+	background: #fff;
+	color: var(--erm-text);
+	font-size: 0.9375rem;
+	cursor: pointer;
+	transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.erm-pagination__btn:hover,
+.erm-pagination__btn:focus {
+	border-color: var(--erm-primary);
+	color: var(--erm-primary);
+}
+
+.erm-pagination__btn--active {
+	background: var(--erm-primary);
+	border-color: var(--erm-primary);
+	color: #fff;
+}
+
+.erm-pagination__btn--active:hover,
+.erm-pagination__btn--active:focus {
+	background: var(--erm-primary-hover);
+	color: #fff;
+}
+
+.erm-no-results,
+.erm-error {
+	grid-column: 1 / -1;
+	text-align: center;
+	padding: 48px 24px;
+	color: var(--erm-text-light);
+	font-size: 1rem;
+}
+
+.erm-error {
+	color: #9b1c1c;
+}
+
+@media (max-width: 768px) {
+	.erm-filters {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.erm-filter-group {
+		min-width: 100%;
+		flex: 1 1 100%;
+	}
+
+	#erm-clear-filters {
+		width: 100%;
+	}
+
+	.erm-grid {
+		grid-template-columns: 1fr;
+	}
+}
