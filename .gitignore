@@ -32,6 +32,19 @@ wp-config.php
 # Log files
 *.log
 
+# Dependencies
+/vendor/
+/node_modules/
+
+# Tests & cache
+/tests/coverage/
+*.cache
+.env
+
+# macOS / Windows
+.DS_Store
+Thumbs.db
+
 # htaccess
 /.htaccess
 

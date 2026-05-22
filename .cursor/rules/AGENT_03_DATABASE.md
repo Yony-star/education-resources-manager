@@ -268,11 +268,15 @@ $by_type = $wpdb->get_results(
 
 // Total vistas y descargas
 $totals = $wpdb->get_row(
-    "SELECT 
-        SUM(CASE WHEN action_type = 'view' THEN 1 ELSE 0 END) as total_views,
-        SUM(CASE WHEN action_type = 'download' THEN 1 ELSE 0 END) as total_downloads,
-        COUNT(DISTINCT user_id) as unique_users
-    FROM {$this->table_name}"
+    $wpdb->prepare(
+        "SELECT
+            SUM(CASE WHEN action_type = %s THEN 1 ELSE 0 END) as total_views,
+            SUM(CASE WHEN action_type = %s THEN 1 ELSE 0 END) as total_downloads,
+            COUNT(DISTINCT user_id) as unique_users
+        FROM {$this->table_name}",
+        'view',
+        'download'
+    )
 );
 
 $stats = [

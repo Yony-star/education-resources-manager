@@ -82,7 +82,7 @@ public function add_admin_menu() {
 Solo encolar en las páginas del plugin:
 ```php
 public function enqueue_scripts($hook) {
-    $plugin_pages = ['toplevel_page_erm-resources', 'recursos-edu_page_erm-stats'];
+    $plugin_pages = ['toplevel_page_erm-resources', 'erm-resources_page_erm-stats'];
     if (!in_array($hook, $plugin_pages, true)) {
         return;
     }
