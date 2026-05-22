@@ -172,10 +172,22 @@ class ERM_Database {
 	/**
 	 * Get aggregated statistics summary.
 	 *
-	 * @return array
+	 * @param string $period Period to filter tracking totals: 'all', 'month', or 'week'.
+	 * @return array {
+	 *     @type int   $total_resources Published resource count.
+	 *     @type array $by_type         Counts keyed by resource type slug.
+	 *     @type array $by_difficulty   Counts keyed by difficulty slug.
+	 *     @type int   $total_views     View events in the period.
+	 *     @type int   $total_downloads Download events in the period.
+	 *     @type int   $unique_users    Distinct users with tracking in the period.
+	 *     @type string $period         Period used for tracking totals.
+	 * }
 	 */
-	public function get_stats_summary() {
-		$cache_key = 'erm_stats_summary';
+	public function get_stats_summary( $period = 'all' ) {
+		$allowed_periods = array( 'all', 'month', 'week' );
+		$period          = in_array( $period, $allowed_periods, true ) ? $period : 'all';
+
+		$cache_key = 'erm_stats_summary_' . $period;
 		$cached    = get_transient( $cache_key );
 
 		if ( false !== $cached ) {
@@ -184,9 +196,32 @@ class ERM_Database {
 
 		global $wpdb;
 
-		$by_type = $wpdb->get_results(
+		$date_where = '';
+		switch ( $period ) {
+			case 'week':
+				$date_where = $wpdb->prepare(
+					' AND action_date >= %s',
+					gmdate( 'Y-m-d H:i:s', strtotime( '-7 days' ) )
+				);
+				break;
+			case 'month':
+				$date_where = $wpdb->prepare(
+					' AND action_date >= %s',
+					gmdate( 'Y-m-d H:i:s', strtotime( '-30 days' ) )
+				);
+				break;
+			case 'all':
+			default:
+				$date_where = '';
+				break;
+		}
+
+		$count_posts       = wp_count_posts( 'education_resource' );
+		$total_resources   = isset( $count_posts->publish ) ? (int) $count_posts->publish : 0;
+
+		$by_type_raw = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT pm.meta_value as type, COUNT(*) as total
+				"SELECT pm.meta_value AS type, COUNT(*) AS total
 				FROM {$wpdb->posts} p
 				INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
 				WHERE p.post_type = %s
@@ -199,26 +234,59 @@ class ERM_Database {
 			)
 		);
 
-		$totals = $wpdb->get_row(
+		$by_type = array();
+		foreach ( $by_type_raw as $row ) {
+			$by_type[ $row->type ] = (int) $row->total;
+		}
+		foreach ( array( 'course', 'tutorial', 'ebook', 'video' ) as $type ) {
+			if ( ! isset( $by_type[ $type ] ) ) {
+				$by_type[ $type ] = 0;
+			}
+		}
+
+		$by_difficulty_raw = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT
-					SUM(CASE WHEN action_type = %s THEN 1 ELSE 0 END) as total_views,
-					SUM(CASE WHEN action_type = %s THEN 1 ELSE 0 END) as total_downloads,
-					COUNT(DISTINCT user_id) as unique_users
-				FROM {$this->table_name}",
-				'view',
-				'download'
+				"SELECT pm.meta_value AS difficulty, COUNT(*) AS total
+				FROM {$wpdb->posts} p
+				INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+				WHERE p.post_type = %s
+				AND p.post_status = %s
+				AND pm.meta_key = %s
+				GROUP BY pm.meta_value",
+				'education_resource',
+				'publish',
+				'_erm_difficulty_level'
 			)
 		);
 
-		$count_posts = wp_count_posts( 'education_resource' );
+		$by_difficulty = array();
+		foreach ( $by_difficulty_raw as $row ) {
+			$by_difficulty[ $row->difficulty ] = (int) $row->total;
+		}
+		foreach ( array( 'beginner', 'intermediate', 'advanced' ) as $level ) {
+			if ( ! isset( $by_difficulty[ $level ] ) ) {
+				$by_difficulty[ $level ] = 0;
+			}
+		}
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $date_where is prepared when non-empty.
+		$totals = $wpdb->get_row(
+			"SELECT
+				SUM(CASE WHEN action_type = 'view' THEN 1 ELSE 0 END) AS total_views,
+				SUM(CASE WHEN action_type = 'download' THEN 1 ELSE 0 END) AS total_downloads,
+				COUNT(DISTINCT user_id) AS unique_users
+			FROM {$this->table_name}
+			WHERE 1=1 {$date_where}"
+		);
 
 		$stats = array(
-			'total_resources' => isset( $count_posts->publish ) ? (int) $count_posts->publish : 0,
+			'total_resources' => $total_resources,
 			'by_type'         => $by_type,
-			'total_views'     => isset( $totals->total_views ) ? (int) $totals->total_views : 0,
-			'total_downloads' => isset( $totals->total_downloads ) ? (int) $totals->total_downloads : 0,
-			'unique_users'    => isset( $totals->unique_users ) ? (int) $totals->unique_users : 0,
+			'by_difficulty'   => $by_difficulty,
+			'total_views'     => $totals ? (int) ( $totals->total_views ?? 0 ) : 0,
+			'total_downloads' => $totals ? (int) ( $totals->total_downloads ?? 0 ) : 0,
+			'unique_users'    => $totals ? (int) ( $totals->unique_users ?? 0 ) : 0,
+			'period'          => $period,
 		);
 
 		set_transient( $cache_key, $stats, HOUR_IN_SECONDS );
@@ -265,6 +333,9 @@ class ERM_Database {
 	 * Invalidate cached statistics.
 	 */
 	public function invalidate_cache() {
+		delete_transient( 'erm_stats_summary_all' );
+		delete_transient( 'erm_stats_summary_month' );
+		delete_transient( 'erm_stats_summary_week' );
 		delete_transient( 'erm_stats_summary' );
 
 		foreach ( array( 'view', 'download', 'complete' ) as $action_type ) {

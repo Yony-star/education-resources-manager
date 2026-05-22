@@ -1,0 +1,20 @@
+---
+description: Requisitos locales de la prueba técnica ERM (carpeta gitignored)
+alwaysApply: true
+---
+
+# Prueba técnica — contexto local
+
+La carpeta `docs/requerimientos/` existe solo en local (ignorada por Git). Si falta, créala con `ENUNCIADO.md`, `CRITERIOS.md` y `CHECKLIST.md`.
+
+Antes de auditar cumplimiento o proponer cambios de alcance, lee:
+
+1. `docs/requerimientos/ENUNCIADO.md` — brief oficial del evaluador
+2. `docs/requerimientos/CRITERIOS.md` — requisitos numerados
+3. `docs/requerimientos/CHECKLIST.md` — estado actual
+
+Compara contra la implementación en el código y en `docs/ARCHITECTURE.md`, `docs/DATABASE.md`, `docs/API.md`.
+
+Al responder sobre cumplimiento: indica ✅/⚠️/❌ por criterio, cita ruta de archivo y paso de prueba en `http://prueba-tecnica.local`.
+
+Plan de desarrollo interno: `.cursor/rules/00_MASTER_ORCHESTRATOR.md`.

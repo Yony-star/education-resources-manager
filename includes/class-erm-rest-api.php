@@ -184,12 +184,16 @@ class ERM_REST_API {
 		$per_page = $request->get_param( 'per_page' );
 		$orderby  = $request->get_param( 'orderby' );
 
+		if ( 'views' === $orderby ) {
+			return $this->get_resources_ordered_by_views( $request );
+		}
+
 		$query_args = array(
 			'post_type'      => 'education_resource',
 			'post_status'    => 'publish',
 			'posts_per_page' => $per_page,
 			'paged'          => $page,
-			'orderby'        => 'views' !== $orderby ? $orderby : 'date',
+			'orderby'        => $orderby,
 			'order'          => strtoupper( $request->get_param( 'order' ) ),
 		);
 
@@ -351,8 +355,9 @@ class ERM_REST_API {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function get_stats( WP_REST_Request $request ) {
+		$period  = $request->get_param( 'period' );
 		$db      = new ERM_Database();
-		$summary = $db->get_stats_summary();
+		$summary = $db->get_stats_summary( $period );
 		$top     = $db->get_top_resources( 5 );
 		$monthly = $db->get_monthly_stats( 6 );
 
@@ -360,10 +365,205 @@ class ERM_REST_API {
 			array(
 				'success' => true,
 				'data'    => array(
-					'period'         => $request->get_param( 'period' ),
 					'summary'        => $summary,
+					'by_type'        => $summary['by_type'],
+					'by_difficulty'  => $summary['by_difficulty'],
 					'top_resources'  => $top,
 					'monthly_growth' => $monthly,
+				),
+			)
+		);
+	}
+
+	/**
+	 * List resources ordered by real view counts from erm_tracking.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response
+	 */
+	private function get_resources_ordered_by_views( WP_REST_Request $request ) {
+		global $wpdb;
+
+		$page     = $request->get_param( 'page' );
+		$per_page = $request->get_param( 'per_page' );
+		$order    = strtoupper( $request->get_param( 'order' ) );
+		$order    = in_array( $order, array( 'ASC', 'DESC' ), true ) ? $order : 'DESC';
+
+		$table_name = $wpdb->prefix . 'erm_tracking';
+
+		$base_query_args = array(
+			'post_type'              => 'education_resource',
+			'post_status'            => 'publish',
+			'posts_per_page'         => -1,
+			'fields'                 => 'ids',
+			'no_found_rows'          => true,
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
+		);
+
+		$meta_query = array();
+		$type       = $request->get_param( 'type' );
+		if ( $type ) {
+			$meta_query[] = array(
+				'key'     => '_erm_resource_type',
+				'value'   => $type,
+				'compare' => '=',
+			);
+		}
+
+		$difficulty = $request->get_param( 'difficulty' );
+		if ( $difficulty ) {
+			$meta_query[] = array(
+				'key'     => '_erm_difficulty_level',
+				'value'   => $difficulty,
+				'compare' => '=',
+			);
+		}
+
+		if ( ! empty( $meta_query ) ) {
+			$base_query_args['meta_query'] = $meta_query;
+		}
+
+		$tax_query = array();
+		$category  = $request->get_param( 'category' );
+		if ( $category ) {
+			$tax_query[] = array(
+				'taxonomy' => 'resource_category',
+				'field'    => 'slug',
+				'terms'    => $category,
+			);
+		}
+
+		$skill = $request->get_param( 'skill' );
+		if ( $skill ) {
+			$tax_query[] = array(
+				'taxonomy' => 'skill_tag',
+				'field'    => 'slug',
+				'terms'    => $skill,
+			);
+		}
+
+		if ( ! empty( $tax_query ) ) {
+			$base_query_args['tax_query'] = $tax_query;
+		}
+
+		$search = $request->get_param( 'search' );
+		if ( $search ) {
+			$base_query_args['s'] = $search;
+		}
+
+		$filtered_ids = get_posts( $base_query_args );
+
+		if ( empty( $filtered_ids ) ) {
+			return rest_ensure_response(
+				array(
+					'success' => true,
+					'data'    => array(
+						'resources'  => array(),
+						'pagination' => array(
+							'total'        => 0,
+							'total_pages'  => 0,
+							'current_page' => (int) $page,
+							'per_page'     => (int) $per_page,
+							'has_more'     => false,
+						),
+					),
+				)
+			);
+		}
+
+		$ids_placeholder = implode( ',', array_map( 'absint', $filtered_ids ) );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- IDs sanitized with absint; order is ASC|DESC only.
+		$views_data = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT resource_id, COUNT(*) as view_count
+				FROM {$table_name}
+				WHERE resource_id IN ({$ids_placeholder})
+				AND action_type = %s
+				GROUP BY resource_id
+				ORDER BY view_count {$order}",
+				'view'
+			)
+		);
+
+		$views_map = array();
+		foreach ( $views_data as $row ) {
+			$views_map[ (int) $row->resource_id ] = (int) $row->view_count;
+		}
+
+		$ids_with_views    = array_column( $views_data, 'resource_id' );
+		$ids_without_views = array_diff( $filtered_ids, $ids_with_views );
+
+		if ( 'ASC' === $order ) {
+			$sorted_ids = array_merge(
+				array_map( 'intval', $ids_without_views ),
+				array_map( 'intval', $ids_with_views )
+			);
+		} else {
+			$sorted_ids = array_merge(
+				array_map( 'intval', $ids_with_views ),
+				array_map( 'intval', $ids_without_views )
+			);
+		}
+
+		$total       = count( $sorted_ids );
+		$total_pages = (int) ceil( $total / $per_page );
+		$offset      = ( $page - 1 ) * $per_page;
+		$page_ids    = array_slice( $sorted_ids, $offset, $per_page );
+
+		if ( empty( $page_ids ) ) {
+			return rest_ensure_response(
+				array(
+					'success' => true,
+					'data'    => array(
+						'resources'  => array(),
+						'pagination' => array(
+							'total'        => $total,
+							'total_pages'  => $total_pages,
+							'current_page' => (int) $page,
+							'per_page'     => (int) $per_page,
+							'has_more'     => $page < $total_pages,
+						),
+					),
+				)
+			);
+		}
+
+		$posts_query = new WP_Query(
+			array(
+				'post_type'              => 'education_resource',
+				'post_status'            => 'publish',
+				'post__in'               => $page_ids,
+				'orderby'                => 'post__in',
+				'posts_per_page'         => $per_page,
+				'no_found_rows'          => true,
+				'update_post_meta_cache' => true,
+				'update_post_term_cache' => true,
+			)
+		);
+
+		$resources = array();
+		$db        = new ERM_Database();
+
+		foreach ( $posts_query->posts as $post ) {
+			$resource            = $this->format_resource( $post, $db, false );
+			$resource['views']   = $views_map[ $post->ID ] ?? 0;
+			$resources[]         = $resource;
+		}
+
+		return rest_ensure_response(
+			array(
+				'success' => true,
+				'data'    => array(
+					'resources'  => $resources,
+					'pagination' => array(
+						'total'        => $total,
+						'total_pages'  => $total_pages,
+						'current_page' => (int) $page,
+						'per_page'     => (int) $per_page,
+						'has_more'     => $page < $total_pages,
+					),
 				),
 			)
 		);

@@ -21,9 +21,9 @@ $type_labels = array(
 );
 
 $total_by_type = 0;
-if ( ! empty( $stats['by_type'] ) ) {
-	foreach ( $stats['by_type'] as $row ) {
-		$total_by_type += (int) $row->total;
+if ( ! empty( $stats['by_type'] ) && is_array( $stats['by_type'] ) ) {
+	foreach ( $stats['by_type'] as $count ) {
+		$total_by_type += (int) $count;
 	}
 }
 ?>
@@ -66,11 +66,10 @@ if ( ! empty( $stats['by_type'] ) ) {
 					</tr>
 				</thead>
 				<tbody>
-					<?php foreach ( $stats['by_type'] as $row ) : ?>
+					<?php foreach ( $stats['by_type'] as $type_slug => $count ) : ?>
 						<?php
-						$type_slug  = $row->type;
 						$type_label = isset( $type_labels[ $type_slug ] ) ? $type_labels[ $type_slug ] : $type_slug;
-						$count      = (int) $row->total;
+						$count      = (int) $count;
 						$percent    = $total_by_type > 0 ? round( ( $count / $total_by_type ) * 100, 1 ) : 0;
 						?>
 						<tr>

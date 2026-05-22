@@ -66,10 +66,8 @@ Lista recursos publicados con filtros y paginación.
 | `difficulty` | string | — | `beginner`, `intermediate`, `advanced` |
 | `category` | string | — | Slug de `resource_category` |
 | `skill` | string | — | Slug de `skill_tag` |
-| `orderby` | string | `date` | `date`, `title`, `views`* |
+| `orderby` | string | `date` | Ordenar por: `date`, `title`, `views`. Con `views`, se consulta `erm_tracking` para ordenar por conteo real antes de hidratar los posts. |
 | `order` | string | `DESC` | `ASC` o `DESC` |
-
-\* `orderby=views` se resuelve internamente como `date` (no ordena por conteo de vistas en v1.0.0).
 
 #### Ejemplo cURL
 
@@ -234,7 +232,7 @@ Resumen agregado, top 5 y crecimiento mensual. Requiere `manage_options`.
 
 | Parámetro | Tipo | Default | Descripción |
 |-----------|------|---------|-------------|
-| `period` | string | `all` | `all`, `month`, `week` (aceptado; en v1.0.0 se devuelve en `data.period` sin filtrar aún el agregado) |
+| `period` | string | `all` | Filtra los conteos de tracking (`total_views`, `total_downloads`, `unique_users`): `all` (todo), `month` (30 días), `week` (7 días). `total_resources`, `by_type` y `by_difficulty` no dependen del periodo (inventario publicado). |
 
 #### Ejemplo cURL
 
@@ -249,17 +247,17 @@ curl "https://tusitio.local/wp-json/erm/v1/stats" \
 {
   "success": true,
   "data": {
-    "period": "all",
     "summary": {
       "total_resources": 12,
-      "by_type": [
-        { "type": "course", "total": "5" },
-        { "type": "video", "total": "4" }
-      ],
+      "by_type": { "course": 5, "tutorial": 4, "ebook": 2, "video": 1 },
+      "by_difficulty": { "beginner": 6, "intermediate": 4, "advanced": 2 },
       "total_views": 340,
       "total_downloads": 45,
-      "unique_users": 28
+      "unique_users": 28,
+      "period": "all"
     },
+    "by_type": { "course": 5, "tutorial": 4, "ebook": 2, "video": 1 },
+    "by_difficulty": { "beginner": 6, "intermediate": 4, "advanced": 2 },
     "top_resources": [
       {
         "resource_id": "42",
