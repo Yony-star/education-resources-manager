@@ -61,7 +61,7 @@ Thumbs.db
 # uncomment the next line
 #/wp-content/themes
 
-# Cursor — skills locales (no versionar)
+# Cursor — solo skills locales (no versionar). .cursor/rules/, .cursorrules/ y PROMPTS/ SÍ están en Git.
 .cursor/skills/
 
 # Prueba técnica — enunciado y checklist (solo local)

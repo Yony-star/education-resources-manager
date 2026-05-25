@@ -8,6 +8,29 @@ Plugin de WordPress para gestionar recursos educativos: Custom Post Type, taxono
 - PHP 7.4 o superior
 - MySQL 5.7+ o MariaDB 10.3+
 
+## Entorno local: [Local](https://localwp.com/) (WordPress)
+
+Este proyecto se desarrolló y se probó con **Local** (Local by Flywheel): entorno WordPress local con un clic para abrir el sitio, el admin y la carpeta del proyecto.
+
+![Sitio Prueba Tecnica en Local — pestaña Overview](docs/screenshots/local-wordpress-site.png)
+
+*Archivo: [`docs/screenshots/local-wordpress-site.png`](docs/screenshots/local-wordpress-site.png)*
+
+### Configuración del sitio en Local
+
+| Campo | Valor en la captura |
+|-------|---------------------|
+| **Nombre del sitio** | Prueba Tecnica |
+| **Dominio local** | `prueba-tecnica.local` |
+| **Servidor web** | nginx |
+| **PHP** | 8.2.29 (el plugin exige ≥ 7.4) |
+| **Base de datos** | MySQL 8.4.0 |
+| **Multisite** | No |
+
+Desde Local se usan los botones **Open site** (frontend) y **WP Admin** (escritorio). La ruta del plugin en disco es la carpeta del sitio: `app/public/wp-content/plugins/education-resources-manager/`.
+
+Las capturas de pantalla del README (admin, frontend y esta vista de Local) corresponden a ese dominio: `http://prueba-tecnica.local`.
+
 ## Instalación
 
 ### Vía ZIP (recomendado)
@@ -48,6 +71,74 @@ Inserta en cualquier entrada, página o plantilla:
 [recursos_educativos category="programacion" per_page="6"]
 [recursos_educativos type="video" difficulty="advanced" per_page="12"]
 ```
+
+## Panel de administración (wp-admin)
+
+El plugin añade el menú **Recursos Edu.** en el escritorio de WordPress (`education_resource`) con taxonomías **Categorías** y **Habilidades**, meta boxes al editar y columnas personalizadas en el listado.
+
+![Listado de recursos educativos en wp-admin](docs/screenshots/admin-resources-list.png)
+
+*Archivo: [`docs/screenshots/admin-resources-list.png`](docs/screenshots/admin-resources-list.png) — Local: `http://prueba-tecnica.local/wp-admin/edit.php?post_type=education_resource`*
+
+### Menú lateral
+
+| Entrada | Función |
+|---------|---------|
+| **Recursos Edu.** | Listado de todos los recursos (`edit.php?post_type=education_resource`). |
+| **Añadir Nuevo Recurso** | Formulario de alta con meta box «Detalles del Recurso». |
+| **Categorías** | Taxonomía jerárquica `resource_category`. |
+| **Habilidades** | Taxonomía plana `skill_tag`. |
+
+Desde el mismo menú del plugin también se accede al subpanel **Estadísticas** (página `erm-stats`) con resumen de vistas, descargas y gráficos — ver `ERM_Admin::add_admin_menu()`.
+
+### Columnas del listado
+
+Las columnas extra las registra `ERM_Post_Type::add_custom_columns()` y se rellenan en `render_custom_columns()`:
+
+| Columna | Origen |
+|---------|--------|
+| **Estado** | `_erm_publication_status` (Borrador / Publicado / Archivado). |
+| **Tipo** | `_erm_resource_type` (curso, tutorial, ebook, video). |
+| **Nivel** | `_erm_difficulty_level` (beginner, intermediate, advanced). |
+| **Duración** | `_erm_duration_minutes` (minutos). |
+| **Precio** | `_erm_price` (muestra «Gratuito» si es 0). |
+| **Visualizaciones** | Conteo en tabla `{prefix}_erm_tracking` (`action_type = view`). |
+
+En la captura los recursos de prueba aparecen **Publicados** y **Gratuitos**; Tipo, Nivel y Duración están vacíos porque esos posts de demo no tienen meta rellenada — al guardar el recurso desde el meta box se completan.
+
+### Acciones habituales
+
+- **Añadir Nuevo Recurso** — Crear contenido y definir estado de publicación, tipo, URL externa, instructor, etc.
+- **Buscar Recursos** — Búsqueda nativa de WordPress sobre el CPT.
+- **Filtros** — Por fecha y acciones en lote estándar del listado de posts.
+
+## Vista pública en el frontend (single del CPT)
+
+Además del listado del shortcode `[recursos_educativos]`, cada recurso publicado tiene **URL propia** en el sitio porque el CPT `education_resource` es público y tiene archivo en `/recursos/`.
+
+![Vista single de un recurso educativo en el frontend](docs/screenshots/frontend-single-resource.png)
+
+*Archivo: [`docs/screenshots/frontend-single-resource.png`](docs/screenshots/frontend-single-resource.png)*
+
+*Captura en Local: `http://prueba-tecnica.local/recursos/test-resource-manager-2/`*
+
+### Qué muestra la captura
+
+| Elemento | Significado |
+|----------|-------------|
+| **URL `/recursos/...`** | Rewrite del CPT (`slug` → `recursos`, ver `ERM_Post_Type::register()`). El segmento final es el slug del post (`test-resource-manager-2`). |
+| **Título «Test Resource Manager – 2»** | `post_title` del recurso en WordPress. |
+| **«Written by yony in»** | Metadatos del tema (autor); el contenido «Second resource.» es el editor del post. |
+| **Barra superior «Editar Recurso»** | Enlace de administración del CPT cuando hay sesión iniciada. |
+| **«← Test Resource Manager – 1» / «Test Resource Manager – 3 →»** | Navegación entre entradas del mismo tipo que aporta el tema entre singles consecutivos. |
+
+### Relación con el plugin
+
+- **Shortcode** — Catálogo filtrable en una página (cards, AJAX, tracking de vistas desde el listado).
+- **Single en `/recursos/{slug}/`** — Plantilla del tema para leer un recurso como entrada; no pasa por el shortcode, pero usa el mismo CPT y permalinks registrados al activar el plugin.
+- **REST** — `GET /wp-json/erm/v1/resources/{id}` devuelve el mismo recurso en JSON (metadatos `_erm_*`, categorías, skills, vistas, etc.) para consumo programático.
+
+Los recursos en **borrador** o **archivados** (`erm_archived`) no aparecen en el shortcode ni en la API pública; en el single del tema solo se ven los que WordPress expone como publicados según `post_status`.
 
 ## REST API
 
@@ -99,14 +190,29 @@ Enunciado de la prueba
 | **Claude Code (Claude)** | Crear el **plan multi-agente** y los **prompts** (`AGENT_XX`, orquestador, checklists). Material en [`PROMPTS/01-plan-con-claude-code/`](PROMPTS/01-plan-con-claude-code/). |
 | **Cursor** | **Ejecutar** esos agentes fase a fase, generar y revisar código; reglas en `.cursor/rules/` (entrega en [`PROMPTS/cursor-rules/`](PROMPTS/cursor-rules/)). |
 | **Skills WordPress (Cursor)** | Durante la Fase 2: REST API, plugin lifecycle, seguridad, rendimiento, etc. (ver tabla más abajo). |
-| **Local (Flywheel)** | WordPress 6.x + PHP 7.4+ para activar el plugin y validar REST, shortcode y admin. |
+| **Local (Flywheel)** | Entorno local donde se ejecutó y validó el plugin (`prueba-tecnica.local`); ver [Entorno local](#entorno-local-local-wordpress). |
+
+### Prompts y configuración Cursor (incluidos en el repositorio)
+
+**No se omitieron** del control de versiones las carpetas donde reposan todos los prompts y reglas usados para generar este proyecto. Están **incluidas a propósito** en Git; el `.gitignore` **no** las excluye (salvo la excepción indicada abajo).
+
+| Ruta | ¿Versionada? | Contenido |
+|------|--------------|-----------|
+| [`.cursor/rules/`](.cursor/rules/) | **Sí** | Agentes `AGENT_01` … `AGENT_09`, orquestador (`00_MASTER_ORCHESTRATOR.md`), `PRUEBA_TECNICA.mdc` — reglas activas en Cursor durante la implementación. |
+| [`.cursorrules/`](.cursorrules/) | **Sí** | [`CURSORRULES.md`](.cursorrules/CURSORRULES.md) — reglas globales del proyecto para Cursor. |
+| [`PROMPTS/`](PROMPTS/) | **Sí** | Copia de entrega de todos los prompts: plan con Claude, `cursor-rules/`, correcciones (`PROMPT_FIX_*`), bonus tests, etc. |
+
+**Única excepción bajo `.cursor/`:** en `.gitignore` solo figura `.cursor/skills/` (skills de WordPress instalados localmente en Cursor, voluminosos y reinstalables). **`.cursor/rules/` sí se sube al repo.**
+
+Lo que **sí** queda fuera de Git por diseño (no son prompts del proyecto): `docs/requerimientos/` (enunciado local de la prueba) y dependencias generadas (`vendor/`, `tests/wp-tests-config.php`).
 
 ### Carpeta `PROMPTS/`
 
 Incluye lo pedido en las instrucciones de entrega (*prompts utilizados*):
 
 - Copia versionada de los prompts de implementación (`.cursor/rules` → `PROMPTS/cursor-rules/`).
-- Prompt inicial, **salida de Claude (10 archivos)** y `CURSORRULES.md` en `PROMPTS/01-plan-con-claude-code/` (ver `SALIDA-CLAUDE-CODE.md`).
+- Prompt inicial, **salida de Claude (10 archivos)** y material relacionado en `PROMPTS/01-plan-con-claude-code/` (ver `SALIDA-CLAUDE-CODE.md`).
+- Reglas globales también en [`.cursorrules/CURSORRULES.md`](.cursorrules/CURSORRULES.md).
 
 Índice completo: [`PROMPTS/README.md`](PROMPTS/README.md).
 
