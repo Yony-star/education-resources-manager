@@ -38,6 +38,7 @@ wp-config.php
 
 # Tests & cache
 /tests/coverage/
+/tests/wp-tests-config.php
 *.cache
 .env
 

@@ -139,6 +139,19 @@ Skills del mismo paquete disponibles pero **poco o no usados** en este plugin (s
 - **Documentación y SQL** como entregables de la prueba (`docs/`, `database/schema.sql`).
 - **Trazabilidad** para el evaluador: origen del plan en Claude, prompts en `PROMPTS/`, ejecución y skills descritos en este README.
 
+## Tests (bonus PHPUnit)
+
+Suite en `tests/` con **50 tests** (CPT/taxonomías + REST API `erm/v1`).
+
+```bash
+composer install
+mysql -u root -proot -e "CREATE DATABASE IF NOT EXISTS wordpress_test;"
+bash bin/install-wp-tests.sh wordpress_test root root localhost latest
+vendor/bin/phpunit
+```
+
+En Local (Flywheel), usa las mismas credenciales que `wp-config.php` (`root` / `root`, host `localhost`). Ver comentarios en `tests/bootstrap.php`.
+
 ## Desinstalación
 
 1. Desactiva el plugin desde **Plugins**.
